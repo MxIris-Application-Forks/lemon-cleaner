@@ -52,8 +52,13 @@ options:flags errorHandler:nil]
     return self;
 }
 
-
 - (void)scanAppUnlessLanguage:(QMActionItem *)actionItem
+{
+    [self __scanAppUnlessLanguage:actionItem];
+    [self scanActionCompleted];
+}
+
+- (void)__scanAppUnlessLanguage:(QMActionItem *)actionItem
 {
     NSMutableDictionary * languagesResult = [[NSMutableDictionary alloc] init];
     m_languageFilter = [[QMFilterParse alloc] initFilterDict:[delegate xmlFilterDict]];
@@ -66,6 +71,13 @@ options:flags errorHandler:nil]
         NSBundle * appBundle = [NSBundle bundleWithPath:appPath];
         if (appBundle == nil)
             continue;
+        
+        NSString *plugInsPath = [appPath stringByAppendingPathComponent:@"Contents/PlugIns"];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:plugInsPath]) {
+            // 该应用包含插件，则不清理。
+            // 如果清理了无用语言，则safari插件会有bug
+            continue;
+        }
         
         // 枚举路径
         NSFileManager * fm = [NSFileManager defaultManager];
@@ -314,6 +326,12 @@ options:flags errorHandler:nil]
 
 - (void)scanAppUnlessBinary:(QMActionItem *)actionItem
 {
+    [self __scanAppUnlessBinary:actionItem];
+    [self scanActionCompleted];
+}
+
+- (void)__scanAppUnlessBinary:(QMActionItem *)actionItem
+{
     NSMutableDictionary * retDict = [NSMutableDictionary dictionary];
     
     QMFilterParse * binaryFilter = [[QMFilterParse alloc] initFilterDict:[delegate xmlFilterDict]];
@@ -448,6 +466,11 @@ options:flags errorHandler:nil]
 }
 
 - (void)scanAppGeneralBinary:(QMActionItem *)actionItem {
+    [self __scanAppGeneralBinary:actionItem];
+    [self scanActionCompleted];
+}
+
+- (void)__scanAppGeneralBinary:(QMActionItem *)actionItem {
    
     NSMutableDictionary *installBundleIdDic = [InstallAppHelper getInstallBundleIds];
     dispatch_group_t group = dispatch_group_create();
@@ -553,7 +576,6 @@ options:flags errorHandler:nil]
     }
     dispatch_time_t time = dispatch_time(DISPATCH_TIME_NOW, 120ull * NSEC_PER_SEC);
     dispatch_group_wait(group, time);
-
 }
 
 #pragma mark-
@@ -618,6 +640,12 @@ options:flags errorHandler:nil]
 }
 
 - (void)scanDeveloperJunck:(QMActionItem *)actionItem
+{
+    [self __scanDeveloperJunck:actionItem];
+    [self scanActionCompleted];
+}
+
+- (void)__scanDeveloperJunck:(QMActionItem *)actionItem
 {
     NSMutableDictionary * m_developerResult = [NSMutableDictionary dictionary];
     
@@ -704,6 +732,5 @@ options:flags errorHandler:nil]
         
     }
 }
-
 
 @end
